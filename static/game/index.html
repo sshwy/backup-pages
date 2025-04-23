@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+#game-board{
+  margin: 3em;
+}
+.square {
+  height: 70px;
+  width: 70px;
+}
+.edge {
+  height: 15px;
+  min-width: 10px;
+  border: solid;
+  border-width: 1px;
+  border-radius: 20px;
+  position: relative;
+}
+.black {
+  background: black;
+}
+.bar{
+  border: 1px solid;
+  border-radius: 20px;
+  background: black;
+  height: 100%;
+  width: 100%;
+  position: absolute;
+  transition: 0.3s;
+}
+#input {
+  min-width: 400px;
+  min-height: 200px;
+}
+</style>
+<title>The Game</title>
+</head>
+<body>
+  <div id="game-board"></div>
+  <hr />
+  <div id="data">
+    <textarea id="input">5
+0 0 0 0 0
+0 0 0 0 1
+0 0 0 0 0
+0 1 0 0 0
+0 1 0 0 1
+0 1 0 0 0
+0 1 0 1 1 1
+0 1 0 1 0 1
+0 0 0 0 0 0
+0 1 0 1 1 1
+0 0 1 1 0 1
+</textarea>
+    <button onclick="init_by_input()">从数据导入</button>
+    <button onclick="gen_data_by_board()">导出为数据</button>
+  </div>
+  <hr />
+  <div id="help">
+    <p>使用说明：</p>
+    <p><ul>
+      <li>文本框用于读入数据，相信聪明的你能够意会出读入的格式；</li>
+      <li>「从数据导入」按扭会根据文本框中的数据来生成对应的游戏局面。请保证读入数据合法；</li>
+      <li>「导出为数据」按扭可以将局面导出为数据，并输出到文本框中，这会覆盖文本框中原有的文本；</li>
+      <li>在网格的某个正方形上<strong>左键</strong>单击可以进行顺时针旋转；</li>
+      <li>在网格的某个正方形上<strong>右键</strong>单击可以进行逆时针旋转；</li>
+    </ul></p>
+  </div>
+</body>
+<script>
+let new_td = (i,j) => {
+  let e = document.createElement('td');
+  e.setAttribute('id',`td-${i}-${j}`);
+  return e;
+}
+
+const rotate_duration = 300-80;
+let moving = 0, N;
+
+let disappear = (x,y,dir) => {
+  if(get_color(x,y)){
+    let e = document.getElementById(`td-${x}-${y}`);
+    let e_bar = document.createElement('div');
+    e_bar.setAttribute('class','bar');
+
+    if(dir == "down" || dir == "left"){
+      e_bar.style.bottom = "-1px";
+      e_bar.style.left = "-1px";
+    }else{
+      e_bar.style.top = "-1px";
+      e_bar.style.right = "-1px";
+    }
+
+    e.classList.remove('black');
+    e.appendChild(e_bar);
+
+    setTimeout(() => {
+      if(dir == "up" || dir == "down")e_bar.style.height = "1%";
+      else e_bar.style.width = "1%";
+      moving ++;
+      setTimeout(() => {
+        moving --;
+        e.removeChild(e.lastElementChild);
+      }, rotate_duration); 
+    }, 50); 
+  }
+}
+let appear = (x,y,v,dir) => {
+  if(v){
+    let e = document.getElementById(`td-${x}-${y}`);
+    let e_bar = document.createElement('div');
+    e_bar.setAttribute('class','bar');
+    if(dir == "up" || dir == "down")e_bar.style.height = "1%";
+    else e_bar.style.width = "1%";
+
+    if(dir == "down" || dir == "left"){
+      e_bar.style.top = "-1px";
+      e_bar.style.right = "-1px";
+    }else{
+      e_bar.style.bottom = "-1px";
+      e_bar.style.left = "-1px";
+    }
+
+    e.appendChild(e_bar);
+
+    setTimeout(() => {
+      if(dir == "up" || dir == "down")e_bar.style.height = "100%";
+      else e_bar.style.width = "100%";
+      moving ++;
+      setTimeout(() => {
+        moving --;
+        e.removeChild(e.lastElementChild);
+        set_color(x,y,v);
+      }, rotate_duration); 
+    }, 50); 
+  }
+}
+
+let rotate_counterclockwise = (x,y) => {
+  let L = get_color(x*2,y*2-1);
+  let R = get_color(x*2,y*2+1);
+  let D = get_color(x*2+1,y*2);
+  let U = get_color(x*2-1,y*2);
+
+  if(D && !L)disappear(x*2+1,y*2,"right");
+  if(U && !R)disappear(x*2-1,y*2,"left");
+  if(L && !U)disappear(x*2,y*2-1,"down");
+  if(R && !D)disappear(x*2,y*2+1,"up");
+  if(!D && L)appear(x*2+1,y*2,1,"right");
+  if(!U && R)appear(x*2-1,y*2,1,"left");
+  if(!L && U)appear(x*2,y*2-1,1,"down");
+  if(!R && D)appear(x*2,y*2+1,1,"up");
+}
+let rotate_clockwise = (x,y) => {
+  let L = get_color(x*2,y*2-1);
+  let R = get_color(x*2,y*2+1);
+  let D = get_color(x*2+1,y*2);
+  let U = get_color(x*2-1,y*2);
+
+  if(D && !R)disappear(x*2+1,y*2,"left");
+  if(U && !L)disappear(x*2-1,y*2,"right");
+  if(L && !D)disappear(x*2,y*2-1,"up");
+  if(R && !U)disappear(x*2,y*2+1,"down");
+  if(!D && R)appear(x*2+1,y*2,1,"left");
+  if(!U && L)appear(x*2-1,y*2,1,"right");
+  if(!L && D)appear(x*2,y*2-1,1,"up");
+  if(!R && U)appear(x*2,y*2+1,1,"down");
+}
+let rotate = (event,x,y) => {
+  if(moving == 0){
+    console.log('rotate',x,y,!!event.button);
+    if(event.button == 0){
+      rotate_clockwise(x,y);
+    }else if(event.button == 2){
+      rotate_counterclockwise(x,y);
+    }
+  }
+}
+
+let init = n => {
+  N = n;
+  document.oncontextmenu = () => false;
+  let tab = document.createElement('table');
+  tab.setAttribute('class','game-table');
+  for(let i=1;i<=n*2+1;i++){
+    let row = document.createElement('tr');
+    for(let j=1;j<=n*2+1;j++){
+      let e = new_td(i,j);
+      if(i%2==0 && j%2==0){
+        e.setAttribute('class','square');
+        e.setAttribute('onmousedown',`rotate(event,${i/2},${j/2})`);
+      }else if(i%2==0 || j%2==0){
+        e.setAttribute('class','edge');
+      }
+      row.appendChild(e);
+    }
+    tab.appendChild(row);
+  }
+  let stat = document.getElementById('game-board');
+  while(stat.lastElementChild)stat.removeChild(stat.lastElementChild);
+  stat.appendChild(tab);
+}
+
+let set_color = (x,y,v) => {
+  let e = document.getElementById(`td-${x}-${y}`);
+  if(v==1) e.classList.add('black');
+  else e.classList.remove('black');
+}
+let get_color = (x,y) => document.getElementById(`td-${x}-${y}`).classList.contains('black');
+let init_by_input = () => {
+  let data = document.getElementById('input').value;
+  data = data.replaceAll('\n',' ').trim().split(/\s+/);
+  let pos=0;
+
+  let read = () => parseInt(data[pos++]);
+  let n=read();
+
+  init(n);
+  for(let i=1;i<=n+1;i++){
+    for(let j=1;j<=n;j++){
+      set_color(i*2-1,j*2,read());
+    }
+  }
+  for(let i=1;i<=n;i++){
+    for(let j=1;j<=n+1;j++){
+      set_color(i*2,j*2-1,read());
+    }
+  }
+}
+
+let gen_data_by_board = () => {
+  let str = N.toString() + "\n";
+  let n = N;
+  for(let i=1;i<=n+1;i++){
+    let a = [];
+    for(let j=1;j<=n;j++){
+      a.push(get_color(i*2-1,j*2) ? 1 : 0);
+    }
+    str += a.join(' ') + "\n";
+  }
+  for(let i=1;i<=n;i++){
+    let a = [];
+    for(let j=1;j<=n+1;j++){
+       a.push(get_color(i*2,j*2-1) ? 1 : 0);
+    }
+    str += a.join(' ') + "\n";
+  }
+  document.getElementById('input').value = str;
+}
+
+init_by_input();
+</script>
+</html>

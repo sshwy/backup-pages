@@ -1,0 +1,168 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport"><meta name="keywords" content=""><meta name="description" content="Sshwy 的个人博客"><meta name="generator" content="Hexo 6.3.0"><title>使用 Bird-Meertens Formalism 推导 FFT - Sshwy&#39;s Notes</title><link rel="shortcut icon" href="/images/favicon.ico"><link rel="stylesheet" href="/css/ssimple.css?20250423.css"><link rel="stylesheet" href="/iconfont/iconfont.css?20250423.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.13.0/dist/katex.min.css"><script defer src="https://cdn.jsdelivr.net/npm/katex@0.13.0/dist/katex.min.js" crossorigin="anonymous"></script><script>document.addEventListener("DOMContentLoaded",function(){window.renderKatex()})</script></head><body><header><div class="header" style="width:100%"><div class="header-inner" style="position:fixed;z-index:20;top:0;left:0"><div class="header-content" style="max-width:1200px;margin:auto"><div class="blog-title"><span class="iconfont icon-menu1" id="menu-button"></span> <a href="/" class="logo header-title">Sshwy&#39;s Notes</a><div class="mobile-search"><input type="text"> <span class="iconfont icon-search mobile-search-icon"></span> <span class="iconfont icon-baseline-close-px search-close-icon"></span></div></div><div class="navbar" id="menu-list"><ul class="menu"><li class="menu-item"><a href="/archives/" class="menu-item-link"><span class="menu-item-icon iconfont icon-work"></span> Archives</a></li><li class="menu-item"><a href="/directory/" class="menu-item-link"><span class="menu-item-icon iconfont icon-folder-close"></span> Directory</a></li><li class="menu-item"><a href="/about/" class="menu-item-link"><span class="menu-item-icon iconfont icon-user"></span> About</a></li><li class="menu-item"><a href="/static/beibishi2023" class="menu-item-link"><span class="menu-item-icon iconfont icon-favorite"></span> NOI 背笔试</a></li></ul></div><div class="search"><input type="text"> <span class="iconfont icon-search search-icon"></span> <span class="iconfont icon-baseline-close-px search-close-icon"></span></div></div></div><div class="search-shadow"></div><div class="search-box"><div class="search-container"><div class="search-container-inner"><div class="search-data-status"><span>Fetching search data...</span></div><div class="search-count"></div><div class="search-result"></div></div></div></div></div></header><main class="main"><article class="post"><div class="post-title"><h1 class="page-title">使用 Bird-Meertens Formalism 推导 FFT</h1></div><div class="post-meta"><div class="post-info"><span class="post-info-item post-time" title="2022年12月8日星期四下午2点31分 (CST+08:00)"><span class="info-icon iconfont icon-time"></span>更新于 2022年12月8日 </span><span class="icon infosep"></span><span class="post-info-item post-wordcount"> <span class="info-icon iconfont icon-text"></span>约 6,438 字</span></div><div class="post-directory"><span class="iconfont icon-folder-close"></span> <a class="directory" href="/directory">Home</a> <a class="directory" href="/directory/"></a> <span class="icon smallarrow"></span> 当前文章</div><div class="post-tags"><span class="tag"><span class="meta-icon iconfont icon-tag"></span><a class="tag" href="/tags/Notes/">Notes</a></span></div><hr></div><div class="toc"><h2 class="toc-title"><span class="iconfont icon-explain" style="font-size:1em;padding-right:5px"></span>文章目录</h2><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#基本运算符号"><span class="toc-number">1.</span> <span class="toc-text">基本运算符号</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#基本定理"><span class="toc-number">2.</span> <span class="toc-text">基本定理</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#描述-DFT"><span class="toc-number">3.</span> <span class="toc-text">描述 DFT</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#分治"><span class="toc-number">4.</span> <span class="toc-text">分治</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#推导-FFT"><span class="toc-number">5.</span> <span class="toc-text">推导 FFT</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考文献"><span class="toc-number">6.</span> <span class="toc-text">参考文献</span></a></li></ol></div><hr></div><div class="post-content"><p>BMF 是一种非常高妙的程序演算。我们用它来简单推导一下 FFT。</p><script type="math/tex;mode=display">\gdef\concat{\mathbin{+\mkern-8mu+} }
+\gdef\map{\operatorname{\ast} }
+\gdef\red{\operatorname{/} }
+\gdef\single{\operatorname{[\cdot]} }
+\gdef\comp{\operatorname{\circ} }
+\gdef\tri{\operatorname{\triangle} }
+\gdef\app{\operatorname{\$} }
+\gdef\repeat{\operatorname{@} }
+\gdef\fk{\operatorname{\zeta} }
+\gdef\sq{\operatorname{\square} }
+\gdef\len{\operatorname{\ell} }
+\gdef\key#1{ {\color{red}\, #1 \,} }</script><h2><a id="基本运算符号" href="#基本运算符号" class="headerlink" title="基本运算符号"></a>基本运算符号</h2><ul><li><script type="math/tex">f \map</script>表示将一个列表中所有元素变为应用了<script type="math/tex">f</script>之后的结果（map）。</li><li><script type="math/tex">\oplus \red</script>表示将列表中的元素按照具有结合律的运算<script type="math/tex">\oplus</script>合并（reduce）。</li><li><script type="math/tex">\single</script>表示将某个元素转化为一个长度为 1 的仅包含它自己的列表（singleton）。</li><li><script type="math/tex">\concat</script>表示连接两个序列。</li><li><script type="math/tex">\Tau</script>表示二维列表的转置（transpose）。</li><li><script type="math/tex">\Gamma_{\oplus}</script>表示将两个等长的列表对应项通过二元运算<script type="math/tex">\oplus</script>计算出结果形成的新的列表（zip with）。</li><li><script type="math/tex">\len x</script>表示<script type="math/tex">x</script>的长度。</li><li><script type="math/tex">f \tri x</script>的变换规则如下：<script type="math/tex">(f\tri x)_i = (f\comp)^{i}(x_i)</script>，其中<script type="math/tex">f</script>是一个映射，<script type="math/tex">(f \comp)^i</script>表示迭代<script type="math/tex">i</script>次。</li><li><script type="math/tex">f \sq x</script>的变换规则如下：<script type="math/tex">(f \sq x)_i = (f \comp)^{\len x}(x_i)</script>。</li><li><script type="math/tex">f \app x</script>表示<script type="math/tex">f(x)</script>。</li><li><script type="math/tex">n \repeat x</script>表示一个长度为<script type="math/tex">n</script>全是<script type="math/tex">x</script>的列表。</li><li><script type="math/tex">n \fk z = \omega_n\times z</script>。</li></ul><h2><a id="基本定理" href="#基本定理" class="headerlink" title="基本定理"></a>基本定理</h2><p>map 对<script type="math/tex">\circ</script>有分配律：<script type="math/tex">(f \circ g)\map = (f\map)\circ (g\map)</script>。</p><p>关于<script type="math/tex">\Tau</script>的一系列性质：</p><ol><li><script type="math/tex">\Tau</script>的一个等价形式：<script type="math/tex">\Tau = \Gamma_{\concat} \red\circ \single \map \map</script>。</li><li><script type="math/tex">\Tau</script>对 map 有分配律：<script type="math/tex">f \ast \ast \circ \Tau = \Tau \circ f \ast \ast</script>。</li><li><script type="math/tex">\Tau</script>对 reduce 的影响：<script type="math/tex">\Gamma_{\oplus}\red = \oplus \red \map \comp \Tau</script>。因此可以把前者理解为竖着的 reduce。</li></ol><p>我们称<script type="math/tex">\map</script>，<script type="math/tex">\tri</script>，<script type="math/tex">\sq</script>为 pointwise 运算，下面的<script type="math/tex">\oplus</script>，<script type="math/tex">\otimes</script>均为 pointwise 运算：</p><ol><li>关于<script type="math/tex">\map</script>交换律：若<script type="math/tex">f \circ g = g \circ h</script>，那么<script type="math/tex">f \oplus\comp g \map = g \map \comp h \operatorname\oplus</script>。</li><li>若<script type="math/tex">f\circ g = g\circ f</script>，那么<script type="math/tex">f \oplus \comp g \operatorname\otimes = g \otimes \comp f \operatorname\oplus</script>，并且有<script type="math/tex">g\oplus \comp f \operatorname\oplus = (g\comp f)\oplus = (f\comp g)\oplus = f\oplus\comp g \operatorname\oplus</script>。而且这也可以推导出<script type="math/tex">f\oplus\comp f\operatorname\otimes = f\otimes \comp f \operatorname\oplus</script>。</li><li><script type="math/tex">f\oplus\otimes\comp \Tau = \Tau\comp f\otimes\oplus</script>。</li></ol><p>有关<script type="math/tex">n\fk</script>的一个性质是<script type="math/tex">(nm\fk)^m = n\fk</script>。</p><p>有关<script type="math/tex">n\repeat</script>的性质：</p><ol><li>分解：<script type="math/tex">n\repeat\concat\red = \concat\red \comp q\repeat \comp p\repeat \circ\concat\red</script>，其中<script type="math/tex">p\times q = n</script>。</li><li>与<script type="math/tex">\concat\red</script>交换：<script type="math/tex">n\repeat\comp\concat\red = \concat\red\map\comp n\repeat</script>。</li><li>假设操作对象是一个矩阵（二维列表），那么<script type="math/tex">k\repeat = \Tau\comp k\repeat\map</script>。<script type="math/tex">\Tau</script>对于高维列表来说相当于交换第一二维的坐标，因此<script type="math/tex">y = (k\repeat\map) x</script>得到的结果是<script type="math/tex">y_{i,t, j} = x_{i, j}</script>（<script type="math/tex">0\le t &lt; k</script>），再转置一下就能得到<script type="math/tex">y_{t, i, j} = x_{i, j}</script>。</li></ol><h2><a id="描述-DFT" href="#描述-DFT" class="headerlink" title="描述 DFT"></a>描述 DFT</h2><p>对于序列<script type="math/tex">x_0, \ldots, x_{n - 1}</script>的离散傅里叶变换可以描述为</p><script type="math/tex;mode=display">\mathcal{F}_n = +\red\map \comp n\fk\tri\tri \comp n\repeat</script><p>理解方式如下：</p><ul><li><script type="math/tex">(n\fk)\tri</script>表示将序列<script type="math/tex">a_j</script>变成<script type="math/tex">a_jw_n^j</script>。</li><li><script type="math/tex">(n \fk)\tri\tri</script>表示将第<script type="math/tex">i</script>个序列变成<script type="math/tex">a_jw_n^{ij}</script>。</li><li><script type="math/tex">+\red\map</script>表示分别求和。</li></ul><h2><a id="分治" href="#分治" class="headerlink" title="分治"></a>分治</h2><p>观察上面的 specification，我们首先要处理的是形如<script type="math/tex">f\tri\tri</script>的变换。考虑分治。</p><p>先考虑一个简单的情况：对一维列表做<script type="math/tex">f\tri</script>变换。将这个过程分治，相当于将其切成若干段，不妨考虑切出来的段等长。那么把原列表做<script type="math/tex">f \tri</script>变换就可以转换为，把矩阵每行分别做变换，再连起来。写成 BMF 就是</p><script type="math/tex;mode=display">f\tri\comp\concat\red = \concat\red\comp f\sq\tri\comp f \tri \map</script><p>同理，<script type="math/tex">f\tri\tri</script>是针对二维列表的变换：</p><ul><li><script type="math/tex">f\tri\tri</script>相当于对第<script type="math/tex">i</script>行第<script type="math/tex">j</script>列的元素迭代<script type="math/tex">i\times j</script>次。</li><li><script type="math/tex">f \map\tri</script>相当于对第<script type="math/tex">i</script>行第<script type="math/tex">j</script>列的元素迭代<script type="math/tex">i</script>次。</li><li><script type="math/tex">f \tri\map</script>相当于对第<script type="math/tex">i</script>行第<script type="math/tex">j</script>列的元素迭代<script type="math/tex">j</script>次。</li></ul><p>这个过程也可以分治。这里我们的分治方法是：对于一行，按照一维的情况来做。此外，我们也可以将所有行分成若干组，每一组行数相等。分割后我们拿到的其实是一个四维列表。把四维列表拼成二维列表的变换是<script type="math/tex">\concat/\circ\concat \red \map\map</script>。</p><p>接下来做一些 BMF 推导：</p><script type="math/tex;mode=display">\begin{aligned}
+ & \key{f\tri\tri\circ \concat\red}\circ\concat\red\map\map \\
+= & \concat\red\comp f\tri\sq\tri\comp f\tri\tri\key{\map}\comp \concat\red\map\key{\map}\\
+= & \concat\red\comp f\tri\sq\tri\comp (\key{f\tri}\tri\circ \key{\concat\red}\map)\map\\
+= & \concat\red\comp f\tri\sq\tri\comp 
+(\concat\red\map \comp (f\sq\tri\comp f \tri \map) \tri)\key{\map} \\
+= & \concat\red \comp f\tri\sq\tri
+\comp \concat\red\map\map \comp (f\sq\tri\comp f \tri \map) \tri\map \\
+\end{aligned}</script><p>这里我们单独把<script type="math/tex">f\tri \sq \tri \comp 
+\concat \red \map \map</script>拿出来给大家变换一下：</p><ul><li><script type="math/tex">f\tri\comp\concat\red = \concat\red\comp f\sq\tri\comp f \tri \map</script>。</li><li><script type="math/tex">\key{f\tri} \sq \comp \key{\concat\red} \map = \concat\red\map \comp (f\sq\tri\comp f \tri \map)\sq</script>。</li><li><script type="math/tex">\key{f\tri\sq}\tri\comp 
+\key{\concat\red\map}\map = \concat\red\map\map \comp (f\sq\tri\comp f \tri \map)\sq\tri</script>。</li></ul><p>根据基本定理，<script type="math/tex">f\sq\tri\comp f\tri\map = f\tri\map\comp f\sq\tri</script>（可交换）因此</p><script type="math/tex;mode=display">\begin{aligned}
+& \concat\red\comp f\tri\sq\tri\comp 
+\concat\red\map\map \comp (f\sq\tri\comp f \tri \map) \tri\map \\
+= & \concat\red\comp\concat\red\map\map 
+\comp (\key{f\sq\tri\comp f \tri \map})\sq\tri 
+\comp (\key{f\sq\tri\comp f \tri \map}) \tri\map \\
+
+= & \concat\red\comp\concat\red\map\map 
+\comp f\sq\tri\sq\tri \comp f \tri\map\sq\tri
+\comp f\sq\tri\tri\map \comp f\tri\map\tri\map \\
+\end{aligned}</script><p>在 FFT 当中，<script type="math/tex">f = n\fk</script>。我们假设<script type="math/tex">f\sq\tri\sq\tri</script>应用到的列表是一个<script type="math/tex">a\times b\times c\times d</script>的四维列表，且<script type="math/tex">bd = n</script>。那么</p><script type="math/tex;mode=display">\begin{aligned}
+f\sq\tri\sq\tri & = n\fk \sq\tri\sq\tri \\
+& = (n\fk)^d \map\tri\sq\tri \\
+& = ((n\fk)^d \map\tri)^b\map\tri \\
+& = (n\fk)^{db}\map\tri\map\tri \\
+& = 1\fk\map\tri\map\tri \\
+& = 1\fk\map\map\map\map \\
+\end{aligned}</script><p>相当于啥都不干。</p><h2><a id="推导-FFT" href="#推导-FFT" class="headerlink" title="推导 FFT"></a>推导 FFT</h2><p>设<script type="math/tex">n = p\times q</script>，<script type="math/tex">\mathcal{F} \comp\concat\red</script>作用于一个<script type="math/tex">p\times q</script>的二维列表。那么</p><script type="math/tex;mode=display">\begin{aligned}
+\mathcal{F}_n\comp \concat\red 
+& = +\red\map \comp n\fk\tri\tri \comp \key{n\repeat \circ \concat\red} \\
+
+& = +\red\map \comp n\fk\tri\tri \comp \concat\red
+\comp \key{q\repeat \comp p\repeat \comp\concat\red} \\
+
+& = +\red\map \comp 
+\key{n\fk\tri\tri \comp \concat\red
+\comp\concat\red\map\map}
+\comp q\repeat \comp p\repeat \\
+
+\end{aligned}</script><p>这里我们设<script type="math/tex">K = n\fk\sq\tri\sq\tri \comp n\fk \tri\map\sq\tri
+\comp n\fk\sq\tri\tri\map \comp n\fk\tri\map\tri\map</script>：</p><script type="math/tex;mode=display">\begin{aligned}
+& +\red\map \comp 
+\key{n\fk\tri\tri \comp \concat\red
+\comp\concat\red\map\map}
+\comp q\repeat \comp p\repeat \\
+
+= & \key{+\red\map \comp \concat\red} \comp\concat\red\map\map
+\comp K \comp q\repeat \comp p\repeat \\
+
+= & \concat\red \comp \key{+\red\map\map \comp \concat\red\map\map}
+\comp K \comp q\repeat \comp p\repeat \\
+
+= & \concat\red \comp (+\red\circ \concat\red)\map\map
+\comp K \comp q\repeat \comp p\repeat \\
+
+= & \concat\red \comp (+\red\circ +\red\map)\map\map
+\comp K \comp q\repeat \comp p\repeat \\
+\end{aligned}</script><p>最后一步用到了加法结合律。然后我们推导一下后面的<script type="math/tex">K \comp q\repeat \comp p\repeat</script>。注意到<script type="math/tex">q\repeat\comp p\repeat</script>作用于<script type="math/tex">p\times q</script>的结果是得到一个<script type="math/tex">q\times p \times p\times q</script>的列表，因此</p><script type="math/tex;mode=display">\begin{aligned}
+K 
+& = pq\fk\key{\sq}\tri\key{\sq}\tri
+\comp pq\fk \tri\map\key{\sq}\tri
+\comp pq\fk\key{\sq}\tri\tri\map 
+\comp n\fk\tri\map\tri\map \\
+
+& = \key{1\fk\map\tri\map\tri}
+\comp q\fk \tri\map\map\tri
+\comp p\fk\map\tri\tri\map 
+\comp n\fk\tri\map\tri\map \\
+
+& = q\fk \tri\map\map\tri
+\comp \key{p\fk\map\tri\tri\map}
+\comp \key{n\fk\tri\map\tri\map} \\
+
+& = q\fk \tri\map\map\tri
+\comp n\fk\tri\map\tri\map
+\comp p\fk\map\tri\tri\map \\
+
+\end{aligned}</script><p><script type="math/tex">K</script>的类型为<script type="math/tex">q\times p\times p\times q\to q\times p\times p\times q</script>。接下来来推导<script type="math/tex">\mathcal{F}_n\comp \concat\red\comp\Tau</script>：</p><script type="math/tex;mode=display">\begin{aligned}
+&\mathcal{F}_n \comp\concat\red \comp \Tau\\
+
+= &\concat\red \comp (+\red\circ +\red\map)\map\map\\
+& \comp q\fk \tri\map\map\tri
+\comp n\fk\tri\map\tri\map
+\comp p\fk\map\tri\tri\map \\
+& \comp q\repeat \comp p \repeat \comp \key{\Tau}\\
+
+= &\concat\red \comp (+\red\circ +\red\map)\map\map\\
+& \comp \key{q\fk \tri\map}\map\tri
+\comp \key{n\fk\tri\map}\tri\map
+\comp \key{p\fk\map\tri}\tri\map \comp \key{\Tau}\map\map \\
+&\comp q\repeat \comp p \repeat\\
+
+= &\concat\red \comp (+\red\circ +\red\map)\map\map \comp \key{\Tau\map\map}\\
+& \comp q\fk \map\tri\map\tri
+\comp n\fk\map\tri\tri\map
+\comp p\fk\tri\map\tri\map \\
+& \comp q\repeat \comp p \repeat\\
+
+= &\concat\red \comp (+\red\circ +\red\map\comp \Tau)\map\map\\
+& \comp q\fk \map\tri\map\tri
+\comp n\fk\map\tri\tri\map
+\comp p\fk\tri\map\tri\map \\
+& \comp q\repeat \comp p \repeat\\
+
+= &\concat\red \comp (+\red\circ +\red\map)\map\map\\
+& \comp q\fk \map\tri\map\tri
+\comp n\fk\map\tri\tri\map
+\comp p\fk\tri\map\tri\map \\
+& \comp q\repeat \comp p \repeat\\
+\end{aligned}</script><p>最后一步用到了加法交换律。注意到</p><ul><li><script type="math/tex">k\repeat\comp f = f \map \comp k \repeat</script></li><li>分配律：<script type="math/tex">+\red \comp k\fk \map =k\fk\comp+\red</script></li></ul><p>因此</p><script type="math/tex;mode=display">\begin{aligned}
+&\concat\red \comp (\key{+\red\circ +\red\map})\map\map\\
+& \comp q\fk \map\tri\map\tri
+\comp n\fk\map\tri\tri\map
+\comp p\fk\tri\map\tri\map \\
+& \comp q\repeat \comp p \repeat\\
+
+= &\concat\red \comp +\red\map\map \comp \key{+\red}\map\map\map \\
+& \comp \key{q\fk\map}\tri\map\tri
+\comp \key{n\fk\map}\tri\tri\map
+\comp p\fk\tri\map\tri\map \\
+& \comp q\repeat \comp p \repeat\\
+
+= &\concat\red \comp +\red\map\map \comp q\fk\tri\map\tri \\
+& \comp n\fk\tri\tri\map
+\comp +\red\map\map\map
+\comp p\fk\tri\map\tri\map \\
+& \comp \key{q\repeat} \comp p \repeat\\
+
+= &\concat\red \\
+&\comp +\red\map\map \comp q\fk\tri\map\tri \comp q \repeat \\
+&\comp n\fk\tri\tri \\
+&\comp +\red\map\map \comp p\fk\tri\map\tri \comp p \repeat \\
+
+\end{aligned}</script><p>设<script type="math/tex">G(k) = +\red\map\map\comp k\fk\tri\map\tri\comp k\repeat</script>。</p><script type="math/tex;mode=display">\begin{aligned}
+G(k) & = +\red\map\map\comp k\fk\tri\map\tri\comp \key{k\repeat} \\
+& = +\red\map\map\comp \key{k\fk\tri}\map\tri\comp \key\Tau \comp k\repeat\map \\
+& = \Tau\comp+\red\map\map\comp  k\fk\tri\tri\map \comp k\repeat\map\\
+& = \Tau\comp(+\red\map\comp  k\fk\tri\tri \comp k\repeat)\map \\
+& = \Tau\comp\mathcal{F}_k\map
+\end{aligned}</script><p>因此</p><script type="math/tex;mode=display">\begin{aligned}
+\mathcal{F}_n\comp \concat\red
+
+& = (\mathcal{F}_n\comp \concat\red\comp\Tau) \comp \Tau \\
+
+& = (\concat\red
+\comp \Tau\comp\mathcal{F}_q\map
+\comp n\fk\tri\tri
+\comp \Tau\comp\mathcal{F}_p\map)
+\comp \Tau
+\end{aligned}</script><p>记<script type="math/tex">(\concat\red)^{-1}_{p\times q}</script>表示将一个长度为<script type="math/tex">p\times q</script>的序列分成一个<script type="math/tex">p\times q</script>的二维列表，我们就得到了 FFT 的<strong>最终表示</strong>：</p><script type="math/tex;mode=display">\begin{aligned}
+\mathcal{F}_n
+& = \concat\red
+\comp \Tau\comp\mathcal{F}_q\map
+\comp n\fk\tri\tri
+\comp \Tau\comp\mathcal{F}_p\map
+\comp \Tau\comp (\concat\red)^{-1}_{p\times q}
+\end{aligned}</script><p>平时我们写的 FFT 是取<script type="math/tex">p = 2</script>或者<script type="math/tex">q = 2</script>（二分治），这时<script type="math/tex">\mathcal{F}_2</script>就会退化为<script type="math/tex">x_0, x_1\to x_0 + x_1, x_0 - x_1</script>（不需要乘法）。</p><h2><a id="参考文献" href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h2><p><a target="_blank" rel="noopener" href="https://static.aminer.org/pdf/PDF/000/214/041/deriving_the_fast_fourier_algorithm_by_calculation.pdf">Deriving the fast Fourier Algorithm</a></p></div><hr><h3><span class="iconfont icon-history" style="padding-right:5px;font-size:1em"></span>修订记录</h3><div class="post-history-list"><ol reversed><li class="post-history-item">2022年12月8日 创建文章</li></ol></div><div class="post-footer"><hr><div class="next-post"><span class="iconfont icon-arrow-left-circle"></span> <a href="/PFPL/Part1/">「PFPL」 Judgements and Rules 学习笔记</a></div><div class="prev-post"><a href="/Intro-to-Calculational-Programming/">函数式程序设计 / 程序演算入门 Part 1 </a><span class="iconfont icon-arrow-right-circle"></span></div></div></article></main></body><div class="side-button"><div id="comment-button" class="button" title="Valine Comment"><span class="iconfont icon-comment"></span></div><div id="darkmode-button" class="button" title="Switch between day and night"><span class="iconfont icon-moonbyueliang"></span></div><div id="top" class="button" title="Back to top"><span class="iconfont icon-arrowup"></span></div></div><footer id="footer" style="margin:3em 0 2em 0;text-align:center;line-height:1.4em"><span class="post-wordcount iconfont icon-text"></span> 全站约 404,069 字<div class="license" style="padding:0 10px"><span>本站所有文章遵循许可协议 <a target="_blank" rel="license noreferrer noopener" href="https://creativecommons.org/licenses/by-sa/4.0/">Creative Commons Attribution-ShareAlike 4.0 International License</a></span></div><div class="credit"><span>Themed <a href="https://github.com/sshwy/hexo-theme-essence" target="_blank" rel="noreferrer noopener">Essence v1.9.11</a> | Powered by <a href="http://hexo.io" target="_blank" rel="noreferrer noopener">Hexo</a></span></div><div class="friends"><span class="friend-link-span">友情链接 </span><span class="icon friendsep"></span> <a target="_blank" rel="noopener" href="https://carol-xrl.github.io/"><span class="friend-link-span">Carol </span></a><span class="icon friendsep"></span> <a target="_blank" rel="noopener" href="https://www.cnblogs.com/GavinZheng"><span class="friend-link-span">GavinZheng </span></a><span class="icon friendsep"></span> <a target="_blank" rel="noopener" href="https://www.cnblogs.com/xryjr233"><span class="friend-link-span">xryjr233 </span></a><span class="icon friendsep"></span> <a target="_blank" rel="noopener" href="https://www.cnblogs.com/dysyn1314"><span class="friend-link-span" title="为什么我的头常常变绿？因为…… "><span style="font-weight:700"><span class="codeforces p">dy</span><span class="codeforces m">syn</span><span class="codeforces p">1314</span></span> </span></a><span class="icon friendsep"></span> <a target="_blank" rel="noopener" href="https://blog.aor.sd.cn"><span class="friend-link-span">RainAir </span></a><span class="icon friendsep"></span> <a target="_blank" rel="noopener" href="https://www.cnblogs.com/lcyfrog"><span class="friend-link-span">lcyfrog </span></a><span class="icon friendsep"></span> <a target="_blank" rel="noopener" href="https://www.cnblogs.com/maoyiting"><span class="friend-link-span">/hanx/se</span></a></div><div class="copyright"><span>Copyright &copy; 2019-present - Sshwy</span></div></footer><script src="/js/ssimple.js?20250423.js"></script><script src="https://pv.sohu.com/cityjson?ie=utf-8.js" defer></script></html>
