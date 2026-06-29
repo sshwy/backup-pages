@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>憨队教你谨言慎行</title>
+</head>
+<style>
+  .input,
+  .output {
+    width: 100%;
+    min-height: 5em;
+  }
+
+  .root {
+    max-width: 700px;
+    height: 100vh;
+    margin: 0 auto;
+  }
+</style>
+
+<body>
+  <div class="root">
+    <h2>憨队教你如何谨言慎行</h2>
+    <h3>输入</h3>
+    <textarea name="input" id="input" cols="30" rows="10" class="input"></textarea>
+    <div class="btn-group">
+      <button class="encode">使用憨队算法加密</button>
+      <button class="decode">使用憨队算法解密</button>
+    </div>
+    <h3>输出</h3>
+    <textarea name="output" id="output" cols="30" rows="10" class="output"></textarea>
+  </div>
+</body>
+<script type="text/javascript">
+  var hyperBase64 = {
+    encode: function (s, times = 1) {
+      if (isFinite(times) && times > 0) while (times !== 0) {
+        s = window.btoa(s);
+        --times;
+      }
+      return s
+    },
+    decode: function (s, times = 1) {
+      if (isFinite(times) && times > 0) while (times !== 0) {
+        s = window.atob(s);
+        --times;
+      }
+      return s
+    }
+  };
+  var filpTransform = {
+    encode: function (s) {
+      if (Object.prototype.toString.call(s) !== '[object String]') throw new Error('invalid argument')
+      s = s.split('')
+      function trans(l, r) {
+        if (l + 1 === r || l === r) return
+        const mid = Math.floor((l + r) / 2)
+        for (let i = l; i < mid; i++) {
+          let j = i - l + mid;
+          let t = s[i];
+          s[i] = s[j];
+          s[j] = t;
+        }
+        trans(l, mid);
+        trans(mid, r);
+      }
+      trans(0, s.length || 0)
+      s = s.join('')
+      return s
+    },
+    decode: function (s) {
+      if (Object.prototype.toString.call(s) !== '[object String]') throw new Error('invalid argument')
+      s = s.split('')
+      function trans(l, r) {
+        if (l + 1 === r || l === r) return
+        const mid = Math.floor((l + r) / 2)
+        trans(l, mid);
+        trans(mid, r);
+        for (let i = l; i < mid; i++) {
+          let j = i - l + mid;
+          let t = s[i];
+          s[i] = s[j];
+          s[j] = t;
+        }
+      }
+      trans(0, s.length || 0)
+      s = s.join('')
+      return s
+    },
+  };
+  (function () {
+    document.getElementsByClassName('encode')[0].addEventListener('click', function (e) {
+      const content = document.getElementsByClassName('input')[0].value || ''
+      console.log(content)
+      const result = hyperBase64.encode(
+        filpTransform.encode(
+          hyperBase64.encode(
+            window.encodeURI(content)
+          )
+        )
+      )
+      console.log(result)
+      document.getElementsByClassName('output')[0].value = result || ''
+    });
+    document.getElementsByClassName('decode')[0].addEventListener('click', function (e) {
+      const content = document.getElementsByClassName('input')[0].value || ''
+      console.log(content)
+      const result = window.decodeURI(
+        hyperBase64.decode(
+          filpTransform.decode(
+            hyperBase64.decode(content)
+          )
+        )
+      )
+      console.log(result)
+      document.getElementsByClassName('output')[0].value = result || ''
+    });
+  })();
+</script>
+
+</html>
